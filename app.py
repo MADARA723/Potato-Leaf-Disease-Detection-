@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image
 
 # 1. Load the model you already have
-model = tf.keras.models.load_model('model.h5')
+model = tf.keras.models.load_model('model.keras')  # type: ignore
 class_names = ['Early Blight', 'Late Blight', 'Healthy']
 
 st.title("Potato Leaf Disease Classifier")
