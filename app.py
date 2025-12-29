@@ -17,7 +17,7 @@ def load_model():
         return None
 
 model = load_model()
-class_names = ['Early Blight', 'Late Blight', 'Healthy']
+class_names = ['Late Blight', 'Early Blight', 'Healthy']
 
 st.title("🥔 Potato Leaf Disease Classifier")
 st.write("Upload a leaf image to detect diseases and see the confidence score.")
@@ -60,3 +60,4 @@ if file is not None and model is not None:
         st.error("Advice: High risk! Remove infected plants immediately to prevent spreading.")
     else:
         st.success("Advice: Your plant looks healthy. Keep maintaining good irrigation!")
+
