@@ -5,8 +5,14 @@ import os
 
 st.set_page_config(page_title="Potato Disease Detector", layout="centered")
 
-# Pulls the token securely from Streamlit's vault
-hf_client = Client("ASITMORE/Potato_Leaf_Disease_Detection", hf_token=st.secrets["HF_TOKEN"])
+# Safely try to get the token. If it doesn't exist, it sets it to None instead of crashing.
+hf_token = st.secrets.get("HF_TOKEN")
+
+if not hf_token:
+    st.error("Missing HF_TOKEN! Please add it to Streamlit Secrets.")
+
+# Connect to your live Hugging Face backend
+hf_client = Client("ASITMORE/Potato_Leaf_Disease_Detection", hf_token=hf_token)
 
 st.title("🥔 Potato Leaf Disease Classifier")
 file = st.file_uploader("Choose a potato leaf image...", type=["jpg", "jpeg", "png"])
