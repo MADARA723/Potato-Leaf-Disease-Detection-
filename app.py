@@ -20,11 +20,11 @@ if file is not None:
             tmp_file.write(file.getvalue())
             tmp_path = tmp_file.name
             
-        try:
-            # Send the image to your API
+     try:
+            # Send the image to your API using the function index instead of the name
             result = hf_client.predict(
-                img=handle_file(tmp_path),
-                api_name="/predict"
+                handle_file(tmp_path),
+                fn_index=0
             )
             
             # Parse the response
