@@ -12,7 +12,7 @@ if not hf_token:
     st.error("Missing HF_TOKEN! Please add it to Streamlit Secrets.")
 
 # Connect to your live Hugging Face backend
-hf_client = Client("ASITMORE/Potato_Leaf_Disease_Detection", hf_token=hf_token)
+hf_client = Client("ASITMORE/Potato_Leaf_Disease_Detection", token=hf_token)
 
 st.title("🥔 Potato Leaf Disease Classifier")
 file = st.file_uploader("Choose a potato leaf image...", type=["jpg", "jpeg", "png"])
