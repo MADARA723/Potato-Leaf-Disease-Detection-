@@ -15,19 +15,19 @@ if file is not None:
     st.image(file, caption="Uploaded Image", use_container_width=True)
     
     with st.spinner('Analyzing image via Hugging Face Backend...'):
-        # Save the uploaded file temporarily so the client can transmit it
+        # Save uploaded file temporarily so gradio_client can transmit it
         with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_file:
             tmp_file.write(file.getvalue())
             tmp_path = tmp_file.name
             
         try:
-            # Send the image to your API using the function index
+            # Matches the exact endpoint and parameter discovered from client.view_api()
             result = hf_client.predict(
-                handle_file(tmp_path),
-                fn_index=0
+                img=handle_file(tmp_path),
+                api_name="/predict_disease"
             )
             
-            # Parse the response
+            # Parse response string: "Class|Confidence"
             predicted_class, confidence_str = result.split("|")
             confidence = float(confidence_str)
             
@@ -47,6 +47,5 @@ if file is not None:
             st.error(f"Failed to connect to ML backend: {e}")
             
         finally:
-            # Clean up the temp file
             if os.path.exists(tmp_path):
                 os.remove(tmp_path)
