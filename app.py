@@ -1,63 +1,50 @@
 import streamlit as st
-import tensorflow as tf
-import numpy as np
-from PIL import Image
+from gradio_client import Client, handle_file
+import tempfile
 import os
 
 st.set_page_config(page_title="Potato Disease Detector", layout="centered")
 
-# Helper function to load model safely
-@st.cache_resource
-def load_model():
-    model_path = 'model.keras' # Ensure this matches your file name on GitHub
-    if os.path.exists(model_path):
-        return tf.keras.models.load_model(model_path)
-    else:
-        st.error(f"Model file '{model_path}' not found. Please check your GitHub repository.")
-        return None
-
-model = load_model()
-class_names = ['Late Blight', 'Early Blight', 'Healthy']
+# Connect to your live Hugging Face backend
+hf_client = Client("ASITMORE/Potato_Leaf_Disease_Detection")
 
 st.title("🥔 Potato Leaf Disease Classifier")
-st.write("Upload a leaf image to detect diseases and see the confidence score.")
-
 file = st.file_uploader("Choose a potato leaf image...", type=["jpg", "jpeg", "png"])
 
-if file is not None and model is not None:
-    # 1. Display the uploaded image
-    img = Image.open(file)
-    st.image(img, caption="Uploaded Image", use_container_width=True)
+if file is not None:
+    st.image(file, caption="Uploaded Image", use_container_width=True)
     
-    # 2. Preprocessing (Matching your model1.ipynb logic)
-    img_resized = img.resize((256, 256))
-    img_array = np.array(img_resized)
-    
-    # In your main.py, you didn't divide by 255. 
-    # If your model has a Rescaling layer, don't divide here.
-    # If it DOES NOT, keep the / 255.0
-    img_batched = np.expand_dims(img_array, axis=0)
-    
-    # 3. Prediction Logic (Like main.py)
-    with st.spinner('Analyzing image...'):
-        predictions = model.predict(img_batched)
-        
-        # Calculate Predicted Class and Confidence (Percentage)
-        predicted_class = class_names[np.argmax(predictions[0])]
-        confidence = np.max(predictions[0]) * 100
-    
-    # 4. Result Display
-    st.subheader(f"Prediction: {predicted_class}")
-    
-    # Progress bar for confidence
-    st.progress(int(confidence))
-    st.write(f"**Confidence Score:** {confidence:.2f}%")
+    with st.spinner('Analyzing image via Hugging Face Backend...'):
+        # Save the uploaded file temporarily so the client can transmit it
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_file:
+            tmp_file.write(file.getvalue())
+            tmp_path = tmp_file.name
+            
+        try:
+            # Send the image to your API
+            result = hf_client.predict(
+                img=handle_file(tmp_path),
+                api_name="/predict"
+            )
+            
+            # Parse the response
+            predicted_class, confidence_str = result.split("|")
+            confidence = float(confidence_str)
+            
+            # Display results
+            st.subheader(f"Prediction: {predicted_class}")
+            st.progress(int(confidence))
+            st.write(f"**Confidence Score:** {confidence:.2f}%")
 
-    # Business Logic / Advice
-    if predicted_class == "Early Blight":
-        st.warning("Advice: Apply fungicides and ensure proper crop rotation.")
-    elif predicted_class == "Late Blight":
-        st.error("Advice: High risk! Remove infected plants immediately to prevent spreading.")
-    else:
-        st.success("Advice: Your plant looks healthy. Keep maintaining good irrigation!")
-
+            if predicted_class == "Early Blight":
+                st.warning("Advice: Apply fungicides and ensure proper crop rotation.")
+            elif predicted_class == "Late Blight":
+                st.error("Advice: High risk! Remove infected plants immediately.")
+            else:
+                st.success("Advice: Your plant looks healthy. Keep maintaining good irrigation!")
+            
+        except Exception as e:
+            st.error(f"Failed to connect to ML backend: {e}")
+            
+        finally:
+            os.remove(tmp_path)
