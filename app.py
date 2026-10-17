@@ -20,8 +20,8 @@ if file is not None:
             tmp_file.write(file.getvalue())
             tmp_path = tmp_file.name
             
-     try:
-            # Send the image to your API using the function index instead of the name
+        try:
+            # Send the image to your API using the function index
             result = hf_client.predict(
                 handle_file(tmp_path),
                 fn_index=0
@@ -47,4 +47,6 @@ if file is not None:
             st.error(f"Failed to connect to ML backend: {e}")
             
         finally:
-            os.remove(tmp_path)
+            # Clean up the temp file
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
